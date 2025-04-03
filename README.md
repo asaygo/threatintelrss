@@ -28,10 +28,15 @@ pip3 install -r requirements.txt
 
 Create a .env file with the following variables:
 EXPL_SMTPserver=your_smtp_server
+
 EXPL_SMTPPort=your_smtp_port
+
 EXPL_USERNAME=your_email@example.com
+
 EXPL_PASSWORD=your_email_password
+
 EXPL_DESTINATION=recipient@example.com
+
 GEMINI_API_KEY=your_gemini_api_key
 
 
