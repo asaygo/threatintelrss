@@ -42,7 +42,9 @@ GEMINI_API_KEY=your_gemini_api_key
 
 ## Usage
 Run the script with the path to your RSS feed list file:
+
 python3 threatintelrss.py path/to/feeds.txt
+
 The feeds.txt file should contain one RSS feed URL per line. Lines starting with '#' will be ignored.
 
 
@@ -50,8 +52,11 @@ The feeds.txt file should contain one RSS feed URL per line. Lines starting with
 You can customize the script behavior by modifying these variables:
 
 DEBUG: Set to 1 to save a local copy of the email content
+
 MIN_CHARS: Minimum character count for valid content
+
 IGNORE_TITLE: List of title prefixes to ignore
+
 SUBJECT: Email subject line prefix
 
 ## How It Works
