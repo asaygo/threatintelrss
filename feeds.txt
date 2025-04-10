@@ -3,7 +3,6 @@
 #http://feeds.feedburner.com/TheHackersNews?format=xml
 #http://feeds.feedburner.com/eset/blog
 #http://feeds.trendmicro.com/TrendMicroResearch
-#https://blog.malwarebytes.com/feed/
 #https://gbhackers.com/feed/
 #https://research.checkpoint.com/feed
 #https://sandboxescaper.blogspot.com/feeds/posts/default?alt=rss
@@ -31,6 +30,7 @@ http://www.harmj0y.net/blog/feed/
 http://www.invoke-ir.com/feeds/posts/default
 http://www.labofapenetrationtester.com/feeds/posts/default?alt=rss
 https://adsecurity.org/?feed=rss2
+https://any.run/cybersecurity-blog/category/malware-analysis/feed/
 https://azurecomcdn.azureedge.net/en-us/blog/topics/security/feed/
 https://blog.carnal0wnage.com/feeds/posts/default?alt=rss
 https://blog.cobaltstrike.com/feed/
@@ -40,6 +40,7 @@ https://blog.inspired-sec.com/feed.xml
 https://blog.mozilla.org/security/feed/
 https://blog.sucuri.net/feed
 https://blog.techorganic.com/atom.xml
+https://blog.trailofbits.com/index.xml
 https://blog.vastart.dev/feeds/posts/default?alt=rss
 https://blog.xpnsec.com/rss.xml
 https://blog.zecops.com/feed/
@@ -52,6 +53,7 @@ https://community.rapid7.com/community/metasploit/blog/feeds/posts
 https://cybersyndicates.com/index.xml
 https://enigma0x3.net/feed/
 https://feedproxy.google.com/IrongeeksSecuritySite
+https://feeds.feedburner.com/HaveIBeenPwnedLatestBreaches
 https://feeds.feedburner.com/tenable/qaXL
 https://foxglovesecurity.com/feed/
 https://funoverip.net/feed/
@@ -85,13 +87,17 @@ https://threatpost.com/feed/
 https://tyranidslair.blogspot.com/feeds/posts/default?alt=rss
 https://unit42.paloaltonetworks.com/feed/
 https://whiteknightlabs.com/feed/
+https://www.alertlogic.com/blog/category/threat-intelligence/feed/
 https://www.attackdebris.com/?feed=rss2
 https://www.binarly.io/blog/rss.xml
 https://www.cert-devoteam.fr/publications/en/feed/
 https://www.corelan.be/index.php/feed/
 https://www.crowdstrike.com/en-us/blog/feed
 https://www.fireeye.com/blog/threat-research/_jcr_content.feed
+https://www.huntress.com/blog/rss.xml
 https://www.intezer.com/feed/
+https://www.malwarebytes.com/blog/feed/index.xml
+https://www.microsoft.com/en-us/security/blog/feed/
 https://www.nccgroup.trust/uk/about-us/newsroom-and-events/blogs/uk-sc-rss-feed/
 https://www.proofpoint.com/us/rss.xml
 https://www.thezdi.com/blog?format=rss
