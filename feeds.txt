@@ -105,3 +105,4 @@ https://www.wiz.io/feed/rss.xml
 https://www.zscaler.com/blogs/feeds/security-research
 https://zerosum0x0.blogspot.com/feeds/posts/default
 https://www.synacktiv.com/en/feed/lastblog.xml
+https://www.bitdefender.com/nuxt/api/en-us/rss/labs/antimalware-research/
