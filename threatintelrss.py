@@ -355,8 +355,9 @@ def parse_feeds(c_time):
         save_data_to_file("news.html", content_data)
 
     summary = query_gemini(str(content_data))
-    content_data = "<div class=\"paragraph-container\"><div class=\"title\"><u>Summary</u></div><div class=\"text\">" + \
-                    summary + "</div></div><br><br>" + content_data
+    content_data = "<div class=\"paragraph-container\"><div class=\"title\"><h2>Summary</h2></div><div class=\"text\"><pre>" + \
+                    summary + "</pre></div></div><br><br>" + content_data
+    content_data = content_data.replace("**", "<br>\n**")
   
     # send the news
     send_news(content_data, c_time)
