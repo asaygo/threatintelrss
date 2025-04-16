@@ -108,3 +108,6 @@ https://www.synacktiv.com/en/feed/lastblog.xml
 https://www.bitdefender.com/nuxt/api/en-us/rss/labs/antimalware-research/
 https://darkmentor.com/publication/index.xml
 https://blog-en.itochuci.co.jp/rss
+https://www.cisa.gov/cybersecurity-advisories/all.xml
+https://www.cisa.gov/news.xml
+https://www.cisa.gov/blog.xml
