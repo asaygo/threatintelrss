@@ -140,7 +140,7 @@ def query_gemini(query):
     }
 
     try:
-        response = requests.post(url, headers=headers, json=payload)
+        response = requests.post(url, headers=headers, json=payload, timeout=35)
 
         # Check if the request was successful
         if response.status_code == 200:
@@ -163,7 +163,7 @@ def get_web_content(url):
             "User-Agent": user_agent
         }
         # Send an HTTP GET request to the URL
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=5)
         
         # Check if the request was successful
         if response.status_code == 200:
