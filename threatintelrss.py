@@ -147,7 +147,7 @@ def query_gemini(query):
             response_data = response.json()
             text_value = response_data['candidates'][0]['content']['parts'][0]['text']
         else:
-            print("Error:", response.status_code, response.text)
+            print("[-] Error:", response.status_code, response.text)
 
     except Exception as e:
         return f"An error occurred: {e}"
@@ -169,9 +169,9 @@ def get_web_content(url):
         if response.status_code == 200:
             text_value = response.text  # Return the content of the webpage as text
         else:
-            print(f"Failed to retrieve the webpage. Status code: {response.status_code}")
+            print(f"[-] Failed to retrieve the webpage. Status code: {response.status_code}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"[-] get_web_content(): An error occurred: {e}")
     return text_value
 
 # send the email
@@ -225,7 +225,7 @@ def load_feed_list(fname):
         for line in f:
             line = line.replace('\n', '')
             line = line.replace('\r', '')
-            if "#" not in line:
+            if "#" not in line and len(line) > 10:
                 url_feeds.append(line)
                 counter = counter+1
 
@@ -311,19 +311,24 @@ def extract_feed_info(url, c_time):
 
                     # summarize the article using Gemini AI
                     web_content = get_web_content(link)
-                    output = query_gemini(str(web_content))
-
-                    # if Gemini couln't summarize the article
-                    # use the data extracted from the RSS feed
-                    if len(output) > len(summary):
-                        print("\t[*] Use Gemini summary")
-                        summary = output
-                        print(summary)
-
-                    # add the article to the html content
-                    feed_data = "<div class=\"paragraph-container\"><div class=\"title\"><a href=\"" + link + "\">" + title + "</a></div>"
-                    feed_data += "<div class=\"date\">" + published + "</div><br>"
-                    feed_data += "<div class=\"text\"><pre>" + summary + "</pre></div></div>"
+                    if len(web_content) >= MIN_CHARS:
+                        output = query_gemini(str(web_content))
+                      
+                        # if Gemini couln't summarize the article
+                        # use the data extracted from the RSS feed
+                        if len(output) > len(summary):
+                            print("[*] Use Gemini summary")
+                            summary = output
+                            print(summary)
+                    else:
+                        break
+                    
+                    if len(summary) >= MIN_CHARS:
+                        # add the article to the html content
+                        feed_data = "<div class=\"paragraph-container\"><div class=\"title\"><a href=\"" + link + "\">" + title + "</a></div>"
+                        feed_data += "<div class=\"date\">" + published + "</div><br>"
+                        feed_data += "<div class=\"text\"><pre>" + summary + "</pre></div></div>"
+                        content_data += feed_data
                     
                     content_data += feed_data
 
@@ -334,33 +339,39 @@ def extract_feed_info(url, c_time):
 def parse_feeds(c_time):
     global DEBUG
     global css
+    global MIN_CHARS
 
     counter = 0
     feed_data  = ''
     content_data = css
 
     for url in url_feeds:
-        feed_data = extract_feed_info(url, c_time)
-
+        try:
+          feed_data = extract_feed_info(url, c_time)
+        except:
+          # if there is an error, go to the next url/feed
+          continue
+          
         # add each entry to a table
-        if len(feed_data) > 0:
+        if len(feed_data) >= MIN_CHARS:
             content_data += feed_data
             counter += 1
 
-        # sleep for 5 seconds until checking next feed
-        time.sleep(5)
+        # sleep for 2 seconds until checking next feed
+        time.sleep(2)
 
     if DEBUG == 1:
         # save to file
         save_data_to_file("news.html", content_data)
 
-    summary = query_gemini(str(content_data))
-    content_data = "<div class=\"paragraph-container\"><div class=\"title\"><h2>Summary</h2></div><div class=\"text\"><pre>" + \
-                    summary + "</pre></div></div><br><br>" + content_data
-    content_data = content_data.replace("**", "<br>\n**")
+    if len(content_data) > (MIN_CHARS + len(css)):
+        summary = query_gemini(str(content_data))
+        content_data = "<div class=\"paragraph-container\"><div class=\"title\"><h2>Summary</h2></div><div class=\"text\"><pre>" + \
+                       summary + "</pre></div></div><br><br>" + content_data
+        content_data = content_data.replace("**", "<br>\n**")
   
-    # send the news
-    send_news(content_data, c_time)
+        # send the news
+        send_news(content_data, c_time)
 
     return counter
 
@@ -371,7 +382,7 @@ def save_data_to_file(fname, data):
             f.close()
 
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"[-] save_data_to_file(): An error occurred: {e}")
 
     return
 
