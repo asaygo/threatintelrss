@@ -111,3 +111,4 @@ https://blog-en.itochuci.co.jp/rss
 https://www.cisa.gov/cybersecurity-advisories/all.xml
 https://www.cisa.gov/news.xml
 https://www.cisa.gov/blog.xml
+https://manuelberrueta.github.io/feed.xml
