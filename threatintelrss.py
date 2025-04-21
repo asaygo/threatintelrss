@@ -327,7 +327,7 @@ def extract_feed_info(url, c_time):
                         # add the article to the html content
                         feed_data = "<div class=\"paragraph-container\"><div class=\"title\"><a href=\"" + link + "\">" + title + "</a></div>"
                         feed_data += "<div class=\"date\">" + published + "</div><br>"
-                        feed_data += "<div class=\"text\"><pre>" + summary + "</pre></div></div>"
+                        feed_data += "<div class=\"text\"><code>" + summary + "</code></div></div>"
                         content_data += feed_data
                     
                     content_data += feed_data
@@ -366,9 +366,9 @@ def parse_feeds(c_time):
 
     if len(content_data) > (MIN_CHARS + len(css)):
         summary = query_gemini(str(content_data))
-        content_data = "<div class=\"paragraph-container\"><div class=\"title\"><h2>Summary</h2></div><div class=\"text\"><pre>" + \
-                       summary + "</pre></div></div><br><br>" + content_data
-        content_data = content_data.replace("**", "<br>\n**")
+        content_data = "<div class=\"paragraph-container\"><div class=\"title\"><h2>Summary</h2></div><div class=\"text\"><code>" + \
+                       summary + "</code></div></div><br><br>" + content_data
+        content_data = content_data.replace("**", "<br><br><br>\n\n\n**")
   
         # send the news
         send_news(content_data, c_time)
