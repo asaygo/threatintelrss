@@ -27,6 +27,9 @@ SUBJECT = "[Exploit news]"
 # list of RSS feeds to check
 url_feeds = []
 
+# list of blog titles
+titles = []
+
 # these will be retrieved from env
 SMTPserver = ""
 SMTPPort = 465
@@ -247,6 +250,7 @@ def send_news(data, c_time):
 def extract_feed_info(url, c_time):
     global IGNORE_TITLE
     global MIN_CHARS
+    global titles
 
     feed_data = ''
     content_data = ''
@@ -289,6 +293,11 @@ def extract_feed_info(url, c_time):
                 for word in IGNORE_TITLE:
                     if title.find(word) ==0:
                         can_ignore = 1
+
+                if title in titles:
+                    can_ignore = 1
+                else:
+                    titles.append(title)
 
                 if can_ignore == 0:
                     link = d.entries[i].link.replace('\n', '').replace('\r', '').replace('|', '')
