@@ -114,3 +114,4 @@ https://www.cisa.gov/blog.xml
 https://manuelberrueta.github.io/feed.xml
 https://medium.com/feed/mitre-attack
 https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v
+https://www.nextron-systems.com/feed/
