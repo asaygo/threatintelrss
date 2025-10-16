@@ -116,3 +116,4 @@ https://medium.com/feed/mitre-attack
 https://feeds.feedburner.com/threatintelligence/pvexyqv7v0v
 https://www.nextron-systems.com/feed/
 https://reliaquest.com/rss.xml
+https://www.group-ib.com/feed/blogfeed/
