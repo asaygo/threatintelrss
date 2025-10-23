@@ -10,19 +10,20 @@ import os
 import requests
 import time
 import sys
+import json
+from bs4 import BeautifulSoup
 
 # set it to 1 if you want to save a local copy of the news
-DEBUG = 0
+DEBUG = 1
 
 # min chars to be considered valid content
-MIN_CHARS = 150
+MIN_CHARS = 50
 
 # define blog titles to ignore
-IGNORE_TITLE = ["[dos]", "Threat Intelligence Bulletin", "Cyber Security Webinar", 
-                "Security Update Review", "cyberinsurance", "A week in security", "Survey:"]
-
-# define email message subject
-SUBJECT = "[Exploit news]"
+IGNORE_TITLE = ["[dos]", "Threat Intelligence Bulletin", "Cyber Security Webinar",  "Cybersecurity",
+                "Security Update Review", "cyberinsurance", "A week in security", "Survey:", "Education", "Academy", 
+		"Ransomware", "Best Practice", "Top Cyber", "AI SOC", "patch update", "availability", "pwn2own", " scam",
+                "telemetry", "scam text", "security gap", "cloud security", "market report", "phishing"]
 
 # list of RSS feeds to check
 url_feeds = []
@@ -31,69 +32,54 @@ url_feeds = []
 titles = []
 
 # these will be retrieved from env
-SMTPserver = ""
-SMTPPort = 465
-USERNAME = ""
-PASSWORD = ""
-DESTINATION = ""
 GEMINI_API_KEY = ""
+WEBHOOK_URL = ""
 
-# define the styling
-css = """
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f9f9f9;
-        }
-        .paragraph-container {
-            margin-bottom: 40px; /* Ample spacing between paragraphs */
-            padding: 20px;
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-        }
-        .title {
-            font-size: 22px;
-            font-weight: bold;
-            margin-bottom: 10px;
-        }
-        .date {
-            font-size: 16px;
-            color: gray;
-            margin-bottom: 10px;
-        }
-        .text {
-            position: relative;
-            font-size: 16px;
-            padding-bottom: 6px;
-        }
-        .text::after, .text::before {
-            content: "";
-            display: block;
-            height: 3px;
-            width: 100%;
-            background: red;
-            position: absolute;
-            bottom: 0;
-        }
-        .text::before {
-            bottom: 5px;
-        }
-    </style>"""
+CONTENT_FILE = "content.dat"
+
+def send_discord_message(webhook_url, message_content):
+    """
+    Posts a simple text message to a Discord webhook.
+
+    Args:
+        webhook_url (str): The full URL of your Discord webhook.
+        message_content (str): The text message you want to send.
+    """
+    if len(message_content) > 1990:
+        message_content = message_content[:1990]
+
+    # Discord requires the message to be sent as a JSON payload
+    payload = {
+        'content': message_content
+    }
+
+    # Send the POST request to the webhook URL
+    try:
+        response = requests.post(
+            webhook_url, 
+            data=json.dumps(payload), 
+            headers={'Content-Type': 'application/json'}
+        )
+        
+        # Check the response status code
+        if response.status_code == 204:
+            print("Successfully sent message to Discord.")
+        else:
+            print(f"Failed to send message. Status Code: {response.status_code}")
+            print(f"Response Text: {response.text}")
+            
+    except requests.exceptions.RequestException as e:
+        print(f"An error occurred: {e}")
+
+    return
 
 # set up the environment variables
 def setup_env():
-    global SMTPserver
-    global SMTPPort
-    global USERNAME
-    global PASSWORD
-    global DESTINATION
     global GEMINI_API_KEY
+    global WEBHOOK_URL
 
     # Remove specific environment variables before loading .env
-    variables_to_remove = ["EXPL_SMTPserver", "EXPL_SMTPPort", "EXPL_USERNAME"
-                           "EXPL_PASSWORD", "EXPL_DESTINATION", "GEMINI_API_KEY"]
+    variables_to_remove = ["GEMINI_API_KEY", "WEBHOOK_URL"]
 
     try:
         for var in variables_to_remove:
@@ -102,14 +88,8 @@ def setup_env():
         # Load the .env file
         load_dotenv()
 
-        # Retrieve the SMTP server details
-        SMTPserver = os.getenv("EXPL_SMTPserver")
-        SMTPPort = os.getenv("EXPL_SMTPPort")
-
-        # Retrieve mail account details
-        USERNAME = os.getenv("EXPL_USERNAME")
-        PASSWORD = os.getenv("EXPL_PASSWORD")
-        DESTINATION = os.getenv("EXPL_DESTINATION")
+        # Retrieve Discord webhook
+        WEBHOOK_URL = os.getenv("WEBHOOK_URL")
 
         # Retrieve Gemini API key
         GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -136,7 +116,7 @@ def query_gemini(query):
         "contents": [
             {
                 "parts": [
-                    {"text": "Please summarize the following content. Ignore the html tags.\n" + query + ""}
+                    {"text": "Summarize the following content and ignore the html tags. If it sounds like a sales pitch and is not about an exploit, a vulnerability, a malware, firmware, or about reverse engineering, just return 'N/A'.\n" + query + ""}
                 ]
             }
         ]
@@ -170,43 +150,31 @@ def get_web_content(url):
         
         # Check if the request was successful
         if response.status_code == 200:
-            text_value = response.text  # Return the content of the webpage as text
+             # Parse the HTML content
+            soup = BeautifulSoup(response.text, 'html.parser')
+
+            # Remove unwanted elements
+            for tag in soup(['script', 'style', 'nav', 'aside', 'footer', 'header', 'noscript']):
+                tag.decompose()
+
+            # Extract all text
+            text_value = soup.body.get_text(separator='\n', strip=True)
+
+            # Try to find the main article content
+            article = soup.find('article')
+            if article:
+                text_value = article.get_text(separator='\n', strip=True)
+            else:
+                # Fallback: try common content containers
+                main = soup.find('main') or soup.find('div', class_='content') or soup.find('div', id='content')
+                text_value = main.get_text(separator='\n', strip=True) if main else soup.body.get_text(separator='\n', strip=True)
+
         else:
             print(f"[-] Failed to retrieve the webpage. Status code: {response.status_code}")
     except Exception as e:
         print(f"[-] get_web_content(): An error occurred: {e}")
     return text_value
 
-# send the email
-def send_email(content, c_time):
-    global SMTPserver
-    global SMTPPort
-    global DESTINATION
-    global USERNAME
-    global PASSWORD
-    global SUBJECT
-
-    c_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-
-    # set the content type
-    msg = MIMEText(content, 'html')
-
-    # set email from/subject
-    msg['Subject'] = SUBJECT + ' - ' + c_time
-    msg['From'] = USERNAME
-
-    # login to the mail server
-    conn = smtplib.SMTP_SSL(SMTPserver, SMTPPort)
-    conn.login(USERNAME, PASSWORD)
-
-    # try sending the email
-    try:
-        print("[+] Send email")
-        conn.sendmail(USERNAME, DESTINATION, msg.as_string())
-    finally:
-        conn.quit()
-    
-    return
 
 # load the feed list
 # return the number of loaded RSS feeds
@@ -236,14 +204,23 @@ def load_feed_list(fname):
 
     return counter
 
-# send the email with the news
 def send_news(data, c_time):
     global MIN_CHARS
+    global WEBHOOK_URL
 
     # check if we have data to send
     if len(data) >= MIN_CHARS:
-        send_email(data, c_time)
+        #send_email(data, c_time)
+        send_discord_message(WEBHOOK_URL, data)
 
+    return
+
+
+def save_content(text):
+    global CONTENT_FILE
+    with open(CONTENT_FILE, "a") as f:
+        f.write(text + "\n\n")
+        f.close()
     return
 
 # parse the XML message
@@ -252,7 +229,6 @@ def extract_feed_info(url, c_time):
     global MIN_CHARS
     global titles
 
-    feed_data = ''
     content_data = ''
 
     # check if we have a valid url and creation time
@@ -291,15 +267,14 @@ def extract_feed_info(url, c_time):
                 # check if we can ignore the article (example: sales-pitch)
                 can_ignore = 0
                 for word in IGNORE_TITLE:
-                    if title.find(word) ==0:
+                    if word.lower() in title.lower():
                         can_ignore = 1
 
                 if title in titles:
                     can_ignore = 1
-                else:
-                    titles.append(title)
 
                 if can_ignore == 0:
+                    titles.append(title)
                     link = d.entries[i].link.replace('\n', '').replace('\r', '').replace('|', '')
 
                     # fix the link for rapid7 articles
@@ -310,36 +285,34 @@ def extract_feed_info(url, c_time):
                     # extract blog article data
                     summary = d.entries[i].summary.replace('\n', '').replace('\r', '').replace('|', '')
                     published = d.entries[i].published.replace('\n', '').replace('\r', '').replace('|', '')
-                    summary = re.sub('<[^<]+?>', '', summary)
-                    summary = re.sub('\s{2,}', ' ', summary)
+                    summary = re.sub(r'<[^<]+?>', '', summary)
+                    summary = re.sub(r'\s{2,}', ' ', summary)
 
                     # if the content is too long
                     # truncate the blog content to MIN_CHARS
-                    if len(summary) >= MIN_CHARS:
-                        summary = summary[:MIN_CHARS] + "..."
+                    #if len(summary) >= MIN_CHARS:
+                    #    summary = summary[:MIN_CHARS] + "..."
 
                     # summarize the article using Gemini AI
-                    web_content = get_web_content(link)
-                    if len(web_content) >= MIN_CHARS:
-                        output = query_gemini(str(web_content))
-                      
+                    #web_content = get_web_content(link)
+                    #if len(web_content) >= MIN_CHARS:
+                    #    save_content(web_content)
+                        #output = query_gemini(str(web_content))
+                        #summary = output
                         # if Gemini couln't summarize the article
                         # use the data extracted from the RSS feed
-                        if len(output) > len(summary):
-                            print("[*] Use Gemini summary")
-                            summary = output
-                            print(summary)
-                    else:
-                        break
-                    
+                        #if len(output) > len(summary):
+                        #    print("[*] Use Gemini summary")
+                        #    summary = output
+                        #    print(summary)
+                    #else:
+                    #    break
+
                     if len(summary) >= MIN_CHARS:
                         # add the article to the html content
-                        feed_data = "<div class=\"paragraph-container\"><div class=\"title\"><a href=\"" + link + "\">" + title + "</a></div>"
-                        feed_data += "<div class=\"date\">" + published + "</div><br>"
-                        feed_data += "<div class=\"text\"><code>" + summary + "</code></div></div>"
-                        content_data += feed_data
-                    
-                    content_data += feed_data
+                        content_data = link + " - " + title + "\n"
+                    else:
+                        print("Sales pitch: " + link + " - " + title)
 
     return content_data
 
@@ -347,12 +320,11 @@ def extract_feed_info(url, c_time):
 # and send it over email
 def parse_feeds(c_time):
     global DEBUG
-    global css
     global MIN_CHARS
 
     counter = 0
     feed_data  = ''
-    content_data = css
+    content_data = ""
 
     for url in url_feeds:
         try:
@@ -365,20 +337,17 @@ def parse_feeds(c_time):
         if len(feed_data) >= MIN_CHARS:
             content_data += feed_data
             counter += 1
+        else:
+            continue
 
         # sleep for 2 seconds until checking next feed
         time.sleep(2)
 
-    if DEBUG == 1:
-        # save to file
-        save_data_to_file("news.html", content_data)
+    if len(content_data) > MIN_CHARS:
+        if DEBUG == 1:
+            # save to file
+            save_data_to_file("news.txt", content_data)
 
-    if len(content_data) > (MIN_CHARS + len(css)):
-        summary = query_gemini(str(content_data))
-        content_data = "<div class=\"paragraph-container\"><div class=\"title\"><h2>Summary</h2></div><div class=\"text\"><code>" + \
-                       summary + "</code></div></div><br><br>" + content_data
-        content_data = content_data.replace("**", "<br><br><br>\n\n\n**")
-  
         # send the news
         send_news(content_data, c_time)
 
@@ -406,23 +375,11 @@ if __name__ == "__main__":
         print("[-] Error retrieving environment data")
         exit(0)
 
-    if len(SMTPserver) < 3 or len(SMTPPort) < 1:
-        print("[-] Invalid SMTP server details")
-        exit(0)
-    
-    if int(SMTPPort) <= 0:
-        print("[-] Invalid SMTP server port")
+    if len(WEBHOOK_URL) < 10:
+        print("[-] Invalid Discord webhook")
         exit(0)
 
-    if len(USERNAME) < 3 or len(PASSWORD) < 3:
-        print("[-] Invalid SMTP credentials")
-        exit(0)
-
-    if len(DESTINATION) < 3:
-        print("[-] Invalid destination")
-        exit(0)
-
-    if len(GEMINI_API_KEY) < 3:
+    if len(GEMINI_API_KEY) < 10:
         print("[-] Invalid Gemini API key")
         exit(0)
 
