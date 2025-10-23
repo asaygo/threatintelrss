@@ -34,6 +34,7 @@ EXPL_USERNAME=your_email@example.com
 EXPL_PASSWORD=your_email_password
 EXPL_DESTINATION=recipient@example.com
 GEMINI_API_KEY=your_gemini_api_key
+WEBHOOK_URL=your_discord_webhook
 ```
 
 ## Usage
